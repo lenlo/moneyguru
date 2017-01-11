@@ -107,8 +107,8 @@
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
 	<string>hsft</string>
-    <key>CFBundleShortVersionString</key>
-    <string>{version}</string>
+	<key>CFBundleShortVersionString</key>
+	<string>{version}</string>
 	<key>CFBundleVersion</key>
 	<string>{version}</string>
 	<key>NSHumanReadableCopyright</key>
@@ -121,5 +121,9 @@
 	<string>http://www.hardcoded.net/updates/moneyguru.appcast</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+          <key>NSAllowsArbitraryLoads</key><true/>
+	</dict>
 </dict>
 </plist>
