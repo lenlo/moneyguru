@@ -293,7 +293,16 @@ class Loader:
                 if info.currency:
                     account_currency = Currency(info.currency)
             except ValueError:
-                pass # keep account_currency as self.default_currency
+                # pass # keep account_currency as self.default_currency
+                # XXX: Auto-register unknown currencies, like ^securities
+                logging.debug("Auto registering currency '%s'", info.currency)
+                account_currency = \
+                    Currency.register(info.currency, info.currency,
+                                      # Assume that stock quotes use four decimals while most
+                                      # other "real" currencies use only two.
+                                      # XXX: This might not be good enough!
+                                      4 if info.currency.startswith('^') else 2)
+                Currency(info.currency)
             account = Account(info.name, account_currency, account_type)
             if info.group:
                 account.group = self.groups.find(info.group, account_type)
@@ -357,6 +366,7 @@ class Loader:
                 spawn = Spawn(recurrence, change, date, change.date)
                 recurrence.date2globalchange[date] = spawn
             self.schedules.append(recurrence)
+
         # Budgets
         TODAY = datetime.date.today()
         fallback_start_date = datetime.date(TODAY.year, TODAY.month, 1)
@@ -373,6 +383,7 @@ class Loader:
             if info.repeat_every:
                 budget.repeat_every = info.repeat_every
             self.budgets.append(budget)
+
         self._post_load()
         self.oven.cook(datetime.date.min, until_date=None)
         Currency.get_rates_db().ensure_rates(start_date, [x.code for x in currencies])
@@ -426,6 +437,8 @@ class TransactionInfo:
     def is_valid(self):
         return bool(self.date and ((self.account and self.amount) or self.splits))
 
+    def __repr__(self):
+        return "<TransactionInfo %r>" % self.__dict__
 
 class SplitInfo:
     def __init__(self, account=None, amount=None, currency=None, amount_reversed=False):

@@ -8,6 +8,7 @@
 
 import os
 import re
+import logging
 from itertools import groupby
 
 from .currency import Currency
@@ -29,7 +30,9 @@ class UnsupportedCurrencyError(ValueError):
 re_arithmetic_operators = re.compile(r"[+\-*/()]")
 re_not_arithmetic_operators = re.compile(r"[^+\-*/()]+")
 # 3 letters (capturing)
-re_currency = re.compile(r'([a-zA-Z]{3}\s*$)|(^\s*[a-zA-Z]{3})')
+# xxx: expand the notion of currencies to include stock symbols composed of alphabetics +
+# certain punctuation characters
+re_currency = re.compile(r'([a-zA-Z][a-zA-Z^/:.\-]*\s*$)|(^\s*[a-zA-Z][a-zA-Z^/:.\-]*)')
 # grouping separator. A thousand sep character that has digit before and after *if* the right part
 # has 3 digits. \xa0 is a non-breaking space. We sometimes end up with those in space-separated
 # environments.

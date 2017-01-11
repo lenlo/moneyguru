@@ -14,6 +14,9 @@ from ..model.currency import Currency
 from .base import SplitInfo, TransactionInfo
 from . import base
 
+import sys
+import logging
+
 class Loader(base.Loader):
     FILE_OPEN_MODE = 'rb'
     NATIVE_DATE_FORMAT = '%Y-%m-%d'

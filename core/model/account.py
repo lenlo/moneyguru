@@ -11,6 +11,8 @@ from .sort import sort_string
 from ..exception import DuplicateAccountNameError
 from ..const import Const
 
+from .currency import Currency
+
 class AccountType:
     """Enum of all possible account types.
 
