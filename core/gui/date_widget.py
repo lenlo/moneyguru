@@ -31,7 +31,10 @@ class DateWidget:
         fmt_elems = format.elements
         self._order = [FMT_ELEM[elem] for elem in fmt_elems]
         self._elem2fmt = dict(zip(self._order, fmt_elems))
-        self._selected = DAY
+        self._sel_order = []
+        for elem in self._format.elements:
+            self._sel_order.append(FMT_ELEM.get(elem))
+        self._selected = self._sel_order[0]
         self._buffer = ''
         self._day = 0
         self._month = 0
@@ -40,10 +43,13 @@ class DateWidget:
 
     # --- Private
     def _next(self):
-        if self._selected == DAY:
-            self._selected = MONTH
-        elif self._selected == MONTH:
-            self._selected = YEAR
+        setsel = False
+        for sel in self._sel_order:
+            if self._selected == sel:
+                setsel = True
+            elif setsel:
+                self._selected = sel
+                break
 
     def _flush_buffer(self, force=False):
         # Returns a bool indicating if the buffer was effectively flushed
@@ -92,7 +98,7 @@ class DateWidget:
     def exit(self):
         self._flush_buffer(force=True)
         self.date # will correct the date
-        self._selected = DAY
+        self._selected = self._sel_order[0]
 
     def increase(self):
         self._increase_or_decrease(increase=True)
