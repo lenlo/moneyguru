@@ -18,6 +18,8 @@ the list of classes you can subclass:
 * :class:`CurrencyProviderPlugin`
 """
 
+import logging
+
 from datetime import date
 
 
@@ -174,6 +176,8 @@ class CurrencyProviderPlugin(Plugin):
     """
     TYPE_NAME = "Currency Provider"
 
+    _registered_default_currencies = False
+
     def __init__(self):
         Plugin.__init__(self)
         self.supported_currency_codes = set()
@@ -196,9 +200,12 @@ class CurrencyProviderPlugin(Plugin):
 
         This method isn't designed to be overriden.
         """
-        print("# wrapped_get_currency_rates(%s, %s, %s)" % (currency_code, start_date, end_date))
+        logging.debug("wrapped_get_currency_rates(%s, %s, %s) for %s",
+                      currency_code, start_date, end_date, self)
+        """
         if currency_code not in self.supported_currency_codes:
             raise CurrencyNotSupportedException()
+        """
         try:
             return self.get_currency_rates(currency_code, start_date, end_date) or []
         except NotImplementedError:
@@ -239,6 +246,10 @@ class CurrencyProviderPlugin(Plugin):
         over time, but it's still better than a rate of ``1``.
         """
         #raise NotImplementedError()
+
+        # Only do this once
+        if CurrencyProviderPlugin._registered_default_currencies:
+            return
 
         self.supported_currency_codes |= {'USD', 'EUR'} # already added
         # In order we want to list them
@@ -403,6 +414,7 @@ class CurrencyProviderPlugin(Plugin):
             'XPF', 'CFP franc',
             exponent=0, start_date=date(1998, 1, 2), start_rate=0.01299, latest_rate=0.01114)
 
+        CurrencyProviderPlugin._registered_default_currencies = True
 
     def get_currency_rate_today(self, currency_code):
         """Override this if you have a 'simple' provider.

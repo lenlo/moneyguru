@@ -283,6 +283,9 @@ class RatesDB:
         there is none, a seek for a rate with a higher date will be made.
         """
         # We want to check self._fetched_values for rates to add.
+        # XXX: Saving newly fetched currency rates gets deferred until the next time get_rate
+        # is called. A better solution might be at the end of a fetching session (optionally
+        # delayed using a timer)
         if not self._fetched_values.empty():
             self._save_fetched_rates()
         # This method is a bottleneck and has been optimized for speed.

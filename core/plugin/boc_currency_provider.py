@@ -5,11 +5,13 @@
 # http://www.gnu.org/licenses/gpl-3.0.html
 
 import re
+import logging
+
 from datetime import date, datetime
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-from core.model.currency import RateProviderUnavailable
+from core.model.currency import RateProviderUnavailable, CurrencyNotSupportedException
 from core.plugin import CurrencyProviderPlugin
 
 CURRENCY2BOCID = {
@@ -75,6 +77,12 @@ class BOCProviderPlugin(CurrencyProviderPlugin):
     AUTHOR = "Virgil Dupras"
 
     def get_currency_rates(self, currency_code, start_date, end_date):
+        logging.debug("BofC's get_currency_rates(%s, %s, %s)", currency_code, start_date, end_date)
+
+        # We don't handle stock quotes
+        if currency_code.startswith('^'):
+            raise CurrencyNotSupportedException()
+
         form_data = {
             'lookupPage': 'lookup_daily_exchange_rates.php',
             'startRange': '2001-07-07',
