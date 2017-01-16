@@ -14,9 +14,6 @@ from ..model.currency import Currency
 from .base import SplitInfo, TransactionInfo
 from . import base
 
-import sys
-import logging
-
 class Loader(base.Loader):
     FILE_OPEN_MODE = 'rb'
     NATIVE_DATE_FORMAT = '%Y-%m-%d'
@@ -90,6 +87,13 @@ class Loader(base.Loader):
                     value = tryint(value, default=None)
                 if name and value is not None:
                     self.properties[name] = value
+        for currency_element in root.iter('currency'):
+            self.start_currency()
+            attrib = currency_element.attrib
+            self.currency_info.code = attrib.get('code')
+            self.currency_info.name = attrib.get('name')
+            self.currency_info.exponent = int(attrib.get('exponent'))
+            self.flush_currency()
         for group_element in root.iter('group'):
             self.start_group()
             attrib = group_element.attrib

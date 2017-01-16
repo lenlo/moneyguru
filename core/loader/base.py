@@ -80,11 +80,13 @@ class Loader:
         self.properties = {}
         self.oven = Oven(self.accounts, self.transactions, self.schedules, self.budgets)
         self.target_account = None # when set, overrides the reference matching system
+        self.currency_infos = []
         self.group_infos = []
         self.account_infos = []
         self.transaction_infos = []
         self.recurrence_infos = []
         self.budget_infos = []
+        self.currency_info = CurrencyInfo()
         self.group_info = GroupInfo()
         self.account_info = AccountInfo()
         self.transaction_info = TransactionInfo()
@@ -157,6 +159,14 @@ class Loader:
             year = (result.year % 100) + 2000
             result = result.replace(year=year)
         return result
+
+    def start_currency(self):
+        pass
+
+    def flush_currency(self):
+        if self.currency_info.is_valid():
+            self.currency_infos.append(self.currency_info)
+        self.currency_info = CurrencyInfo()
 
     def start_group(self):
         pass
@@ -279,8 +289,14 @@ class Loader:
         self._load()
         self.flush_account() # Implicit
         # Now, we take the info we have and transform it into model instances
-        currencies = set()
         start_date = datetime.date.max
+        currencies = set()
+        for info in self.currency_infos:
+            logging.debug("# Registering %s (%s, %s)" % (info.code, info.name, info.exponent))
+            try:
+                Currency(info.code)
+            except ValueError:
+                Currency.register(info.code, info.name, info.exponent)
         for info in self.group_infos:
             group = Group(info.name, info.type)
             self.groups.append(group)
@@ -293,16 +309,7 @@ class Loader:
                 if info.currency:
                     account_currency = Currency(info.currency)
             except ValueError:
-                # pass # keep account_currency as self.default_currency
-                # XXX: Auto-register unknown currencies, like ^securities
-                logging.debug("Auto registering currency '%s'", info.currency)
-                account_currency = \
-                    Currency.register(info.currency, info.currency,
-                                      # Assume that stock quotes use four decimals while most
-                                      # other "real" currencies use only two.
-                                      # XXX: This might not be good enough!
-                                      4 if info.currency.startswith('^') else 2)
-                Currency(info.currency)
+                pass # keep account_currency as self.default_currency
             account = Account(info.name, account_currency, account_type)
             if info.group:
                 account.group = self.groups.find(info.group, account_type)
@@ -366,7 +373,6 @@ class Loader:
                 spawn = Spawn(recurrence, change, date, change.date)
                 recurrence.date2globalchange[date] = spawn
             self.schedules.append(recurrence)
-
         # Budgets
         TODAY = datetime.date.today()
         fallback_start_date = datetime.date(TODAY.year, TODAY.month, 1)
@@ -383,10 +389,19 @@ class Loader:
             if info.repeat_every:
                 budget.repeat_every = info.repeat_every
             self.budgets.append(budget)
-
         self._post_load()
         self.oven.cook(datetime.date.min, until_date=None)
         Currency.get_rates_db().ensure_rates(start_date, [x.code for x in currencies])
+
+
+class CurrencyInfo:
+    def __init__(self):
+        self.code = None
+        self.name = None
+        self.exponent = 2
+
+    def is_valid(self):
+        return bool(self.code)
 
 
 class GroupInfo:
@@ -437,8 +452,6 @@ class TransactionInfo:
     def is_valid(self):
         return bool(self.date and ((self.account and self.amount) or self.splits))
 
-    def __repr__(self):
-        return "<TransactionInfo %r>" % self.__dict__
 
 class SplitInfo:
     def __init__(self, account=None, amount=None, currency=None, amount_reversed=False):
