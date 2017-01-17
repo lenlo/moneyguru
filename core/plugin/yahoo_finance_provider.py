@@ -9,16 +9,16 @@ import yahoo_finance
 import logging
 from datetime import date, datetime
 
-from core.model.currency import CurrencyNotSupportedException, USD, EUR, CAD
+from core.model.currency import CurrencyNotSupportedException
 from core.plugin import CurrencyProviderPlugin
-
 
 class YahooFinanceProviderPlugin(CurrencyProviderPlugin):
     NAME = 'Yahoo Finance security price fetcher'
     AUTHOR = "Lennart Lovstrand"
 
     def get_currency_rates(self, currency_code, start_date, end_date):
-        logging.debug("YahooFinance: Looking up %s for %s--%s", currency_code, start_date, end_date)
+        logging.debug("YahooFinance: Looking up %s for %s--%s",
+                      currency_code, start_date, end_date)
 
         # We only handle stock symbols as indicated using a "^" prefix.
         if not currency_code.startswith('^'):
@@ -29,11 +29,9 @@ class YahooFinanceProviderPlugin(CurrencyProviderPlugin):
 
         data = stock.get_historical(start_date.strftime('%Y-%m-%d'),
                                     end_date.strftime('%Y-%m-%d'))
-        # XXX: Need to know the currency too!
-        date_rates = [
+
+        return [
             (datetime.strptime(item['Date'], '%Y-%m-%d'), float(item['Close']))
             for item in data
         ]
-        logging.debug("YahooFinance: Rates => %s", date_rates)
-        return date_rates
 
