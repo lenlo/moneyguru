@@ -292,11 +292,12 @@ class Loader:
         start_date = datetime.date.max
         currencies = set()
         for info in self.currency_infos:
-            logging.debug("# Registering %s (%s, %s)" % (info.code, info.name, info.exponent))
+            logging.debug("# Registering %s (%s, %s), base %s" % (info.code, info.name, info.exponent, info.base))
+            # Don't register it if it already exists
             try:
                 Currency(info.code)
             except ValueError:
-                Currency.register(info.code, info.name, info.exponent)
+                Currency.register(info.code, info.name, info.exponent, base_currency=info.base, user_defined=True)
         for info in self.group_infos:
             group = Group(info.name, info.type)
             self.groups.append(group)
@@ -399,6 +400,7 @@ class CurrencyInfo:
         self.code = None
         self.name = None
         self.exponent = 2
+        self.base = None
 
     def is_valid(self):
         return bool(self.code)

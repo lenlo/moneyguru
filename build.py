@@ -164,7 +164,7 @@ def build_cocoa(dev):
         hardlink('cocoa/mg_cocoa.py', 'build/mg_cocoa.py')
     else:
         copy('cocoa/mg_cocoa.py', 'build/mg_cocoa.py')
-    tocopy = ['core', 'hscommon', 'cocoalib/cocoa', 'objp']
+    tocopy = ['core', 'hscommon', 'cocoalib/cocoa', 'objp', 'yahoo_finance', 'simplejson', 'pytz']
     copy_packages(tocopy, pydep_folder, create_links=dev)
     sys.path.insert(0, 'build')
     collect_stdlib_dependencies('build/mg_cocoa.py', pydep_folder)

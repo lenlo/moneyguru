@@ -9,6 +9,7 @@ import os.path as op
 import xml.etree.cElementTree as ET
 
 from ..model.amount import format_amount
+from ..model.currency import Currency
 from hscommon.util import remove_invalid_xml, ensure_folder
 
 def save(filename, document_id, properties, accounts, groups, transactions, schedules, budgets):
@@ -56,6 +57,16 @@ def save(filename, document_id, properties, accounts, groups, transactions, sche
         else:
             value = str(value)
         props_element.attrib[name] = value
+    for currency in Currency.all:
+        if currency.user_defined:
+            currency_element = ET.SubElement(root, 'currency')
+            attrib = currency_element.attrib
+            attrib['code'] = currency.code
+            attrib['exponent'] = str(currency.exponent)
+            if currency.name:
+                attrib['name'] = currency.name
+            if currency.base_currency:
+                attrib['base'] = currency.base_currency.code
     for group in groups:
         group_element = ET.SubElement(root, 'group')
         attrib = group_element.attrib

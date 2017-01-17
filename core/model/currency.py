@@ -77,7 +77,7 @@ class Currency:
     @staticmethod
     def register(
             code, name, exponent=2, start_date=None, start_rate=1, stop_date=None, latest_rate=1,
-            priority=100):
+            priority=100, base_currency=None, user_defined=False):
         """Registers a new currency and returns it.
 
         ``priority`` determines the order of currencies in :meth:`all`. Lower priority goes first.
@@ -85,7 +85,8 @@ class Currency:
         code = code.upper()
         if code in Currency.by_code:
             return Currency.by_code[code]
-        assert name not in Currency.by_name
+        if name:
+            assert name not in Currency.by_name
         currency = object.__new__(Currency)
         currency.code = code
         currency.name = name
@@ -95,8 +96,11 @@ class Currency:
         currency.stop_date = stop_date
         currency.latest_rate = latest_rate
         currency.priority = priority
+        currency.base_currency = base_currency
+        currency.user_defined = user_defined
         Currency.by_code[code] = currency
-        Currency.by_name[name] = currency
+        if name:
+            Currency.by_name[name] = currency
         Currency.all.append(currency)
         return currency
 
@@ -140,7 +144,7 @@ class Currency:
         elif self.stop_date is not None and date > self.stop_date:
             return self.latest_rate
         else:
-            return self.get_rates_db().get_rate(date, self.code, currency.code)
+            return self.get_rates_db().get_rate(date, self, currency)
 
     def set_CAD_value(self, value, date):
         """Sets the currency's value in CAD on the given date."""
@@ -275,7 +279,15 @@ class RatesDB:
         else:
             return None
 
-    def get_rate(self, date, currency1_code, currency2_code):
+    def _cached_value(self, date, currency):
+        value = self._cache.get((date, currency.code))
+        if value is None:
+            str_date = date2str(date)
+            value = self._seek_value_in_CAD(str_date, currency.code)
+            self._cache[(date, currency.code)] = value
+        return value
+
+    def get_rate(self, date, currency1, currency2):
         """Returns the exchange rate between currency1 and currency2 for date.
 
         The rate returned means '1 unit of currency1 is worth X units of currency2'.
@@ -289,24 +301,23 @@ class RatesDB:
         if not self._fetched_values.empty():
             self._save_fetched_rates()
         # This method is a bottleneck and has been optimized for speed.
-        value1 = None
-        value2 = None
-        if currency1_code == 'CAD':
-            value1 = 1
-        else:
-            value1 = self._cache.get((date, currency1_code))
-        if currency2_code == 'CAD':
-            value2 = 1
-        else:
-            value2 = self._cache.get((date, currency2_code))
-        if value1 is None or value2 is None:
-            str_date = date2str(date)
-            if value1 is None:
-                value1 = self._seek_value_in_CAD(str_date, currency1_code)
-                self._cache[(date, currency1_code)] = value1
-            if value2 is None:
-                value2 = self._seek_value_in_CAD(str_date, currency2_code)
-                self._cache[(date, currency2_code)] = value2
+
+        # The price of securities are stored in their individual base currencies, not CAD.
+        if currency1.base_currency:
+            value1 = self._cached_value(date, currency1)
+            if currency1.base_currency == currency2:
+                return value1
+            return value1 * self.get_rate(date, currency1.base_currency, currency2)
+
+        if currency2.base_currency:
+            value2 = self._cached_value(date, currency2)
+            if currency2.base_currency == currency1:
+                return 1 / value2
+            return self.get_rate(date, currency2.base_currency, currency1) / value2
+
+        value1 = 1 if currency1.code == 'CAD' else self._cached_value(date, currency1)
+        value2 = 1 if currency2.code == 'CAD' else self._cached_value(date, currency2)
+
         return value1 / value2
 
     def set_CAD_value(self, date, currency_code, value):

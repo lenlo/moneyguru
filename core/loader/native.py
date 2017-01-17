@@ -92,7 +92,12 @@ class Loader(base.Loader):
             attrib = currency_element.attrib
             self.currency_info.code = attrib.get('code')
             self.currency_info.name = attrib.get('name')
-            self.currency_info.exponent = int(attrib.get('exponent'))
+            exponent = attrib.get('exponent')
+            if exponent:
+                self.currency_info.exponent = int(exponent)
+            base = attrib.get('base')
+            if base:
+                self.currency_info.base = Currency(base)
             self.flush_currency()
         for group_element in root.iter('group'):
             self.start_group()
