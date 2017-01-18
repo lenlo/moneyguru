@@ -4,6 +4,7 @@
 # which should be included with this package. The terms are also available at
 # http://www.gnu.org/licenses/gpl-3.0.html
 
+import sys
 import logging
 import os.path as op
 from objp.util import pyref, dontwrap, nsrect, nssize, nspoint
@@ -37,6 +38,7 @@ import core.plugin
 import runpy
 import urllib
 import urllib.request
+import cProfile, pstats
 
 class PyMoneyGuruApp(PyBaseApp):
     def __init__(self):
@@ -45,6 +47,13 @@ class PyMoneyGuruApp(PyBaseApp):
                             handlers=[CocoaHandler()])
         install_exception_hook('https://github.com/hsoft/moneyguru/issues')
         logging.debug('started in debug mode')
+
+        self.profile = proxy.prefValue_('Profile')
+        if self.profile:
+            self.profiler = cProfile.Profile()
+            self.profiler.enable()
+            logging.debug('started profiler')
+
         cache_path = op.join(proxy.getCachePath(), 'moneyGuru')
         appdata_path = op.join(proxy.getAppdataPath(), 'moneyGuru')
         currency_code = nonone(proxy.systemCurrency(), 'USD')
@@ -75,6 +84,25 @@ class PyMoneyGuruApp(PyBaseApp):
 
     def shutdown(self):
         self.model.shutdown()
+        if self.profile:
+            self.profiler.disable()
+            rest = self.profile
+            # Interpret the 'Profile' preference value as:
+            #   "YES" or "TRUE" => Print all functions to stderr
+            #   <int>           => Print only the top <int> functions to stderr
+            #   <float>         => Print only the top <float> (* 100) percent functions to stderr
+            #   <filename>      => Print (all) the stats to the given file instead of stderr
+            output = sys.stderr
+            if rest.lower() == "yes" or rest.lower == "true":
+                rest = -1
+            else:
+                try:
+                    rest = float(rest) if '.' in rest else int(rest)
+                except:
+                    output = open(rest, "w")
+                    rest = -1
+            ps = pstats.Stats(self.profiler, stream=output).sort_stats('cumulative')
+            ps.print_stats(rest)
 
     #--- Preferences
     def autoSaveInterval(self) -> int:
