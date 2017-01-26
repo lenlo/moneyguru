@@ -400,7 +400,7 @@ class RatesDB:
                     range_end = cached_start - timedelta(days=1)
             # We don't want to fetch ranges that are too big. It can cause various problems, such
             # as hangs. We prefer to take smaller bites.
-            cur_start = cur_end = start_date
+            cur_start = cur_end = range_start
             while cur_end < range_end:
                 cur_end = min(cur_end + timedelta(days=30), range_end)
                 currencies_and_range.append((currency, cur_start, cur_end))
