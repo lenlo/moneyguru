@@ -6,6 +6,8 @@
 # which should be included with this package. The terms are also available at
 # http://www.gnu.org/licenses/gpl-3.0.html
 
+import sys
+
 from datetime import date
 
 from ..model.date import format_year_month_day, inc_day, inc_month, inc_year, DateFormat
@@ -21,20 +23,47 @@ FMT_ELEM = {
     'M': MONTH,
     'yyyy': YEAR,
     'yy': YEAR,
+    'y': YEAR,
 }
 
 class DateWidget:
-    def __init__(self, format):
+    # The date entry format specifies in which order the date fields should be filled in. It may be given either as a
+    # string (e.g. "d m y"), an instance of DateFormat, or False/None, in which case it defaults to left-to-right in the
+    # current date format. Setting the entry format for the class will override any individual date entry formats
+    # that the instances may have.
+
+    _shared_format = None
+    _shared_selection_order = None
+
+    @classmethod
+    def setEntryFormat(cls, format):
+        if format and not isinstance(format, DateFormat):
+            format = DateFormat(format)
+        cls._shared_format = format
+        cls._shared_selection_order = []
+        if format:
+            for elem in format.elements:
+                cls._shared_selection_order.append(FMT_ELEM.get(elem))
+
+    @classmethod
+    def entryFormat(cls):
+        return cls._shared_format
+
+    def __init__(self, format, entry_format=None):
         if not isinstance(format, DateFormat):
             format = DateFormat(format)
         self._format = format
         fmt_elems = format.elements
         self._order = [FMT_ELEM[elem] for elem in fmt_elems]
         self._elem2fmt = dict(zip(self._order, fmt_elems))
-        self._sel_order = []
-        for elem in self._format.elements:
-            self._sel_order.append(FMT_ELEM.get(elem))
-        self._selected = self._sel_order[0]
+        if not entry_format:
+            entry_format = format
+        if not isinstance(entry_format, DateFormat):
+            entry_format = DateFormat(entry_format)
+        self.__selection_order = []
+        for elem in entry_format.elements:
+            self.__selection_order.append(FMT_ELEM.get(elem))
+        self.__selected = None
         self._buffer = ''
         self._day = 0
         self._month = 0
@@ -42,9 +71,23 @@ class DateWidget:
         self.date = date.today()
 
     # --- Private
+
+    # Allow a shared class setting to override the instance's own _selection_order
+    @property
+    def _selection_order(self):
+        return self.__class__._shared_selection_order or self.__selection_order
+
+    @property
+    def _selected(self):
+        return self.__selected or self._selection_order[0]
+
+    @_selected.setter
+    def _selected(self, value):
+        self.__selected = value
+
     def _next(self):
         setsel = False
-        for sel in self._sel_order:
+        for sel in self._selection_order:
             if self._selected == sel:
                 setsel = True
             elif setsel:
@@ -98,7 +141,7 @@ class DateWidget:
     def exit(self):
         self._flush_buffer(force=True)
         self.date # will correct the date
-        self._selected = self._sel_order[0]
+        self._selected = None
 
     def increase(self):
         self._increase_or_decrease(increase=True)
