@@ -13,8 +13,12 @@ import threading
 from collections import namedtuple
 import re
 import importlib
+<<<<<<< HEAD
 import cProfile
 import pstats
+=======
+import cProfile, pstats
+>>>>>>> 9e85406... Moved the profiling code from cocoa/mg_cocoa.py to core/app.py
 
 from hscommon.notify import Broadcaster
 from hscommon.util import nonone
@@ -211,6 +215,7 @@ class Application(Broadcaster):
         self._load_user_plugins()
         self._hook_currency_plugins()
         self._update_autosave_timer()
+
 
     # --- Private
     def _autosave_all_documents(self):
