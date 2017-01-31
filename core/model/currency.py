@@ -318,6 +318,9 @@ class RatesDB:
         value1 = 1 if currency1.code == 'CAD' else self._cached_value(date, currency1)
         value2 = 1 if currency2.code == 'CAD' else self._cached_value(date, currency2)
 
+        # Some "currencies" aren't directly exchangable into others, e.g. frequent flier miles
+        if value1 == 0 or value2 == 0: return 0
+
         return value1 / value2
 
     def set_CAD_value(self, date, currency_code, value):
