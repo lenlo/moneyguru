@@ -13,7 +13,8 @@ import threading
 from collections import namedtuple
 import re
 import importlib
-import cProfile, pstats
+import cProfile
+import pstats
 
 from hscommon.notify import Broadcaster
 from hscommon.util import nonone
@@ -211,7 +212,6 @@ class Application(Broadcaster):
         self._hook_currency_plugins()
         self._update_autosave_timer()
 
-
     # --- Private
     def _autosave_all_documents(self):
         self.notify('must_autosave')
@@ -386,7 +386,7 @@ class Application(Broadcaster):
                 filter = -1
             else:
                 output = sys.stderr
-                if filter == True:
+                if filter is True:
                     # We want all functions
                     filter = -1
             ps = pstats.Stats(self._profiler, stream=output).sort_stats('cumulative')
