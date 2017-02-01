@@ -13,6 +13,8 @@ import threading
 from collections import namedtuple
 import re
 import importlib
+import cProfile
+import pstats
 
 from hscommon.notify import Broadcaster
 from hscommon.util import nonone
@@ -43,6 +45,7 @@ class PreferenceNames:
     ShowScheduleScopeDialog = 'ShowScheduleScopeDialog'
     DisabledCorePlugins = 'DisabledCorePlugins'
     EnabledUserPlugins = 'EnabledUserPlugins'
+    Profile = 'Profile'
 
 # http://stackoverflow.com/questions/1606436/adding-docstrings-to-namedtuples-in-python
 class SavedCustomRange(namedtuple('SavedCustomRange', 'name start end')):
@@ -159,6 +162,34 @@ class Application(Broadcaster):
         self.appdata_path = appdata_path
         if appdata_path and not op.exists(appdata_path):
             os.makedirs(appdata_path)
+
+        profile = self.get_default(PreferenceNames.Profile, 'False')
+        # Interpret the 'Profile' preference value as:
+        #   YES or TRUE     => Print all functions to stderr
+        #   <number>%       => Print only the top <number> percent functions (0 >= number >= 100)
+        #   <float>         => Print only the top <float> (* 100) percent functions (0.0 >= float >= 1.0)
+        #   <int>           => Print only the top <int> functions
+        #   <filename>      => Print (all) the stats to the given file instead of stderr
+        if profile.lower() == 'yes' or profile.lower() == 'true':
+            self._profile = -1
+        elif profile.lower() == 'no' or profile.lower() == 'false':
+            self._profile = False
+        else:
+            try:
+                if profile.endswith('%'):
+                    self._profile = float(profile[:-1]) / 100
+                elif '.' in profile:
+                    self._profile = float(profile)
+                else:
+                    self._profile = int(profile)
+            except:
+                # A filename
+                self._profile = profile
+        if self._profile:
+            self._profiler = cProfile.Profile()
+            self._profiler.enable()
+            logging.debug('started profiler')
+
         currency.initialize_db(db_path)
         self.is_first_run = not self.get_default(PreferenceNames.HadFirstLaunch, False)
         if self.is_first_run:
@@ -353,6 +384,21 @@ class Application(Broadcaster):
         """
         self._autosave_interval = 0
         self._update_autosave_timer()
+
+        if self._profile:
+            self._profiler.disable()
+            filter = self._profile
+            if isinstance(filter, str):
+                output = open(filter, "w")
+                # We want all functions
+                filter = -1
+            else:
+                output = sys.stderr
+                if filter is True:
+                    # We want all functions
+                    filter = -1
+            ps = pstats.Stats(self._profiler, stream=output).sort_stats('cumulative')
+            ps.print_stats(filter)
 
     def get_enabled_plugins(self):
         return [p for p in self.plugins if self.is_plugin_enabled(p)]
