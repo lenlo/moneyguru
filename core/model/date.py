@@ -608,6 +608,3 @@ class DateFormat:
         """Returns the format as sys (``%d-%m-%Y``)."""
         repl_elems = [self.ISO2SYS[elem] for elem in self.elements]
         return self.separator.join(repl_elems)
-
-# Default user format
-DateFormat.user = DateFormat(None)
