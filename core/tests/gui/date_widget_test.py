@@ -400,7 +400,7 @@ class TestCaseDDMMYYYYWithHyphen:
 
 class TestCaseYYYYMMDDWithDot:
     def setup_method(self, method):
-        self.w = DateWidget('yyyy.MM.dd')
+        self.w = DateWidget('yyyy.MM.dd', 'd M y')
         self.w.date = date(2008, 6, 12)
 
     def test_left(self):
@@ -420,6 +420,30 @@ class TestCaseYYYYMMDDWithDot:
     def test_text(self):
         """Text is the formatted date"""
         eq_(self.w.text, '2008.06.12')
+
+
+class TestCaseYYYYMMDDWithDash:
+    def setup_method(self, method):
+        self.w = DateWidget('yyyy-MM-dd')
+        self.w.date = date(2008, 6, 12)
+
+    def test_left(self):
+        """Selects the day which is last"""
+        self.w.left()
+        eq_(self.w.selection, (8, 9))
+
+    def test_right(self):
+        """Selects the month which is in the middle"""
+        self.w.right()
+        eq_(self.w.selection, (5, 6))
+
+    def test_selection(self):
+        """The year is selected, which is in first position"""
+        eq_(self.w.selection, (0, 3))
+
+    def test_text(self):
+        """Text is the formatted date"""
+        eq_(self.w.text, '2008-06-12')
 
 
 class TestCaseDDMMYYYYOnJanuaryFocusOnMonth:
