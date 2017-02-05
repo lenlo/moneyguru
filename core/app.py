@@ -203,7 +203,7 @@ class Application(Broadcaster):
             self._autosave_timer = None
 
     def _update_date_entry_order(self):
-        DateWidget.setEntryFormat(self._day_first_date_entry and "d m y")
+        DateWidget.setDMYEntryOrder(self._day_first_date_entry)
 
     def _load_custom_ranges(self):
         custom_ranges = self.get_default(PreferenceNames.CustomRanges)

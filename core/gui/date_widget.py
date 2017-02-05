@@ -25,43 +25,21 @@ FMT_ELEM = {
 }
 
 class DateWidget:
-    # The date entry format specifies in which order the date fields should be filled in. It may be given either as a
-    # string (e.g. "d m y"), an instance of DateFormat, or False/None, in which case it defaults to left-to-right in the
-    # current date format. Setting the entry format for the class will override any individual date entry formats
-    # that the instances may have.
-
-    _shared_format = None
-    _shared_selection_order = None
+    # Should dates be entered in day -> month -> year order instead of the normal left-to-right order?
+    _dmyOrder = False
 
     @classmethod
-    def setEntryFormat(cls, format):
-        if format and not isinstance(format, DateFormat):
-            format = DateFormat(format)
-        cls._shared_format = format
-        cls._shared_selection_order = []
-        if format:
-            for elem in format.elements:
-                cls._shared_selection_order.append(FMT_ELEM.get(elem))
+    def setDMYEntryOrder(cls, dmyOrder):
+        cls._dmyOrder = dmyOrder
 
-    @classmethod
-    def entryFormat(cls):
-        return cls._shared_format
-
-    def __init__(self, format, entry_format=None):
+    def __init__(self, format):
         if not isinstance(format, DateFormat):
             format = DateFormat(format)
         self._format = format
         fmt_elems = format.elements
         self._order = [FMT_ELEM[elem] for elem in fmt_elems]
         self._elem2fmt = dict(zip(self._order, fmt_elems))
-        if not entry_format:
-            entry_format = format
-        if not isinstance(entry_format, DateFormat):
-            entry_format = DateFormat(entry_format)
-        self.__selection_order = []
-        for elem in entry_format.elements:
-            self.__selection_order.append(FMT_ELEM.get(elem))
-        self.__selected = None
+        self._selected = None
         self._buffer = ''
         self._day = 0
         self._month = 0
@@ -69,28 +47,21 @@ class DateWidget:
         self.date = date.today()
 
     # --- Private
-
-    # Allow a shared class setting to override the instance's own _selection_order
-    @property
-    def _selection_order(self):
-        return self.__class__._shared_selection_order or self.__selection_order
-
     @property
     def _selected(self):
-        return self.__selected or self._selection_order[0]
+        return self.__selected or (DAY if self.__class__._dmyOrder else self._order[0])
 
     @_selected.setter
     def _selected(self, value):
         self.__selected = value
 
     def _next(self):
-        setsel = False
-        for sel in self._selection_order:
-            if self._selected == sel:
-                setsel = True
-            elif setsel:
-                self._selected = sel
-                break
+        if not self.__class__._dmyOrder:
+            self.right()
+        elif self._selected == DAY:
+            self._selected = MONTH
+        elif self._selected == MONTH:
+            self._selected = YEAR
 
     def _flush_buffer(self, force=False):
         # Returns a bool indicating if the buffer was effectively flushed
