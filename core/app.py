@@ -179,7 +179,7 @@ class Application(Broadcaster):
                     self._profiling = float(profiling)
                 else:
                     self._profiling = int(profiling)
-            except:
+            except Exception:
                 # A filename
                 self._profiling = profiling
         if self._profiling:
