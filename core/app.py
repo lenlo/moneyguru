@@ -13,12 +13,8 @@ import threading
 from collections import namedtuple
 import re
 import importlib
-<<<<<<< HEAD
 import cProfile
 import pstats
-=======
-import cProfile, pstats
->>>>>>> 9e85406... Moved the profiling code from cocoa/mg_cocoa.py to core/app.py
 
 from hscommon.notify import Broadcaster
 from hscommon.util import nonone
@@ -46,7 +42,7 @@ class PreferenceNames:
     ShowScheduleScopeDialog = 'ShowScheduleScopeDialog'
     DisabledCorePlugins = 'DisabledCorePlugins'
     EnabledUserPlugins = 'EnabledUserPlugins'
-    Profile = 'Profile'
+    Profiling = 'Profiling'
 
 # http://stackoverflow.com/questions/1606436/adding-docstrings-to-namedtuples-in-python
 class SavedCustomRange(namedtuple('SavedCustomRange', 'name start end')):
@@ -164,29 +160,29 @@ class Application(Broadcaster):
         if appdata_path and not op.exists(appdata_path):
             os.makedirs(appdata_path)
 
-        profile = self.get_default(PreferenceNames.Profile, 'False')
-        # Interpret the 'Profile' preference value as:
+        profiling = self.get_default(PreferenceNames.Profiling, os.environ.get('MONEYGURU_PROFILING'))
+        # Interpret the 'Profiling' preference value as:
         #   YES or TRUE     => Print all functions to stderr
         #   <number>%       => Print only the top <number> percent functions (0 >= number >= 100)
         #   <float>         => Print only the top <float> (* 100) percent functions (0.0 >= float >= 1.0)
         #   <int>           => Print only the top <int> functions
         #   <filename>      => Print (all) the stats to the given file instead of stderr
-        if profile.lower() == 'yes' or profile.lower() == 'true':
-            self._profile = -1
-        elif profile.lower() == 'no' or profile.lower() == 'false':
-            self._profile = False
+        if not profiling or profiling.lower() == 'no' or profiling.lower() == 'false':
+            self._profiling = False
+        elif profiling.lower() == 'yes' or profiling.lower() == 'true':
+            self._profiling = -1
         else:
             try:
-                if profile.endswith('%'):
-                    self._profile = float(profile[:-1]) / 100
-                elif '.' in profile:
-                    self._profile = float(profile)
+                if profiling.endswith('%'):
+                    self._profiling = float(profiling[:-1]) / 100
+                elif '.' in profiling:
+                    self._profiling = float(profiling)
                 else:
-                    self._profile = int(profile)
+                    self._profiling = int(profiling)
             except:
                 # A filename
-                self._profile = profile
-        if self._profile:
+                self._profiling = profiling
+        if self._profiling:
             self._profiler = cProfile.Profile()
             self._profiler.enable()
             logging.debug('started profiler')
@@ -382,9 +378,9 @@ class Application(Broadcaster):
         self._autosave_interval = 0
         self._update_autosave_timer()
 
-        if self._profile:
+        if self._profiling:
             self._profiler.disable()
-            filter = self._profile
+            filter = self._profiling
             if isinstance(filter, str):
                 output = open(filter, "w")
                 # We want all functions
