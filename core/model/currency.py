@@ -50,8 +50,8 @@ class Currency:
     def __new__(cls, code=None, name=None):
         """Returns the currency with the given code."""
         assert (code is None and name is not None) or (code is not None and name is None)
-        code = code.upper()
         if code is not None:
+            code = code.upper()
             try:
                 return cls.by_code[code]
             except KeyError:
