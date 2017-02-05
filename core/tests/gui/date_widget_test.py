@@ -400,7 +400,8 @@ class TestCaseDDMMYYYYWithHyphen:
 
 class TestCaseYYYYMMDDWithDot:
     def setup_method(self, method):
-        self.w = DateWidget('yyyy.MM.dd', 'd M y')
+        DateWidget.setDMYEntryOrder(True)
+        self.w = DateWidget('yyyy.MM.dd')
         self.w.date = date(2008, 6, 12)
 
     def test_left(self):
@@ -431,6 +432,7 @@ class TestCaseYYYYMMDDWithDot:
 
 class TestCaseYYYYMMDDWithHyphen:
     def setup_method(self, method):
+        DateWidget.setDMYEntryOrder(False)
         self.w = DateWidget('yyyy-MM-dd')
         self.w.date = date(2008, 6, 12)
 

@@ -25,7 +25,7 @@ FMT_ELEM = {
 }
 
 class DateWidget:
-    # Should dates be entered in day -> month -> year order instead of the normal left-to-right order?
+    # Should dates be entered in day -> month -> year order instead of just left-to-right order?
     _dmyOrder = False
 
     @classmethod
@@ -57,7 +57,9 @@ class DateWidget:
 
     def _next(self):
         if not self.__class__._dmyOrder:
-            self.right()
+            # right() will wrap but we shouldn't do that
+            if self._selected != self._order[2]:
+                self.right()
         elif self._selected == DAY:
             self._selected = MONTH
         elif self._selected == MONTH:
