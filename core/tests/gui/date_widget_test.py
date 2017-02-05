@@ -417,25 +417,22 @@ class TestCaseYYYYMMDDWithDot:
         """The day is selected, which is in last position"""
         eq_(self.w.selection, (8, 9))
 
+    def test_type(self):
+        """Enter an partial (abbreviated) date.
+        The period will move the selection from the day field to the month field"""
+        for ch in '2.3':
+            self.w.type(ch)
+        eq_(self.w.text, '2008.3 .02')
+
     def test_text(self):
         """Text is the formatted date"""
         eq_(self.w.text, '2008.06.12')
 
 
-class TestCaseYYYYMMDDWithDash:
+class TestCaseYYYYMMDDWithHyphen:
     def setup_method(self, method):
         self.w = DateWidget('yyyy-MM-dd')
         self.w.date = date(2008, 6, 12)
-
-    def test_left(self):
-        """Selects the day which is last"""
-        self.w.left()
-        eq_(self.w.selection, (8, 9))
-
-    def test_right(self):
-        """Selects the month which is in the middle"""
-        self.w.right()
-        eq_(self.w.selection, (5, 6))
 
     def test_selection(self):
         """The year is selected, which is in first position"""
@@ -444,6 +441,12 @@ class TestCaseYYYYMMDDWithDash:
     def test_text(self):
         """Text is the formatted date"""
         eq_(self.w.text, '2008-06-12')
+
+    def test_type(self):
+        """Enter an (abbreviated) date with each hyphen moving forward to the next subfield"""
+        for ch in '7-5-11':
+            self.w.type(ch)
+        eq_(self.w.text, '2007-05-11')
 
 
 class TestCaseDDMMYYYYOnJanuaryFocusOnMonth:
