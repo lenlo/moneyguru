@@ -404,6 +404,9 @@ class TestCaseYYYYMMDDWithDot:
         self.w = DateWidget('yyyy.MM.dd')
         self.w.date = date(2008, 6, 12)
 
+    def teardown_method(self, method):
+        DateWidget.setDMYEntryOrder(False)
+
     def test_left(self):
         """Selects the month which is in the middle"""
         self.w.left()
@@ -432,7 +435,6 @@ class TestCaseYYYYMMDDWithDot:
 
 class TestCaseYYYYMMDDWithHyphen:
     def setup_method(self, method):
-        DateWidget.setDMYEntryOrder(False)
         self.w = DateWidget('yyyy-MM-dd')
         self.w.date = date(2008, 6, 12)
 

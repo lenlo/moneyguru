@@ -49,14 +49,14 @@ class DateWidget:
     # --- Private
     @property
     def _selected(self):
-        return self.__selected or (DAY if self.__class__._dmyOrder else self._order[0])
+        return self.__selected or (DAY if self._dmyOrder else self._order[0])
 
     @_selected.setter
     def _selected(self, value):
         self.__selected = value
 
     def _next(self):
-        if not self.__class__._dmyOrder:
+        if not self._dmyOrder:
             # right() will wrap but we shouldn't do that
             if self._selected != self._order[2]:
                 self.right()
