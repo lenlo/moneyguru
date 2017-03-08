@@ -133,11 +133,6 @@ class TestCaseDDMMYYYYWithSlash:
         self.w.type('!')
         self._assert_unchanged()
 
-    def test_type_slash(self):
-        """Typing the separator doesn't do anything because we're not buffering"""
-        self.w.type('/')
-        self._assert_unchanged()
-
     def test_type_t(self, monkeypatch):
         # Typing 't' sets the date to today
         monkeypatch.patch_today(2010, 9, 8)
@@ -293,7 +288,7 @@ class TestCaseDDMMYYYYWithSlashBuffering:
         eq_(self.w.selection, (3, 4))
 
     def test_type_slash(self):
-        """Typing the separator saves the bufferand goes to the month field"""
+        """Typing the separator saves the buffer and goes to the month field"""
         self.w.type('/')
         eq_(self.w.text, '01/06/2008')
         eq_(self.w.date, date(2008, 6, 1))
@@ -603,7 +598,8 @@ class TestCaseInvalidBuffer:
         eq_(self.w.text, '12/06/2008')
 
     def test_type_sep(self):
-        # There was a crash when a sep-caused _flush_buffer would be called with an invalid value
+        # Move to the next subfield and insert a '1'
         self.w.type('/')
-        eq_(self.w.text, '0 /06/2008') # don't do anything (stay on DAY)
+        self.w.type('1')
+        eq_(self.w.text, '12/1 /2008')
 
