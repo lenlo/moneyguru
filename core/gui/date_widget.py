@@ -129,8 +129,8 @@ class DateWidget:
 
     def type(self, stuff):
         if stuff == self._format.separator:
-            if self._flush_buffer():
-                self._next()
+            self._flush_buffer()
+            self._next()
             return
         if stuff in {'t', 'T'}:
             self._buffer = ''
